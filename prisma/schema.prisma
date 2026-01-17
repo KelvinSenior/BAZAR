@@ -1,0 +1,281 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CUSTOMER
+  RESTAURANT
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  ASSEMBLING
+  READY
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum IngredientCategory {
+  PROTEIN
+  VEGETABLE
+  CARB
+  SAUCE
+  CHEESE
+  TOPPING
+  CONDIMENT
+}
+
+// User model - supports both customers and restaurant owners
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  role          UserRole  @default(CUSTOMER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Customer relationships
+  creations     UserCreation[]
+  orders        Order[]
+  likes         Like[]
+  remixes       Remix[]
+  followers     Follow[]  @relation("UserFollowers")
+  following     Follow[]  @relation("UserFollowing")
+
+  // Restaurant relationships
+  restaurant    Restaurant?
+
+  @@index([email])
+  @@index([role])
+}
+
+// Restaurant model
+model Restaurant {
+  id            String    @id @default(cuid())
+  name          String
+  description   String?
+  image         String?
+  address       String
+  phone         String?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  ownerId       String    @unique
+  owner         User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  menuItems     MenuItem[]
+  ingredients   Ingredient[]
+  orders        Order[]
+  creations     UserCreation[]
+
+  @@index([ownerId])
+  @@index([isActive])
+}
+
+// Ingredient model - tracks real-time inventory
+model Ingredient {
+  id            String              @id @default(cuid())
+  name          String
+  description   String?
+  image         String?
+  category      IngredientCategory
+  price         Float               @default(0)
+  calories      Int?
+  stock         Int                 @default(0) // Real-time inventory count
+  minStock      Int                 @default(5) // Alert threshold
+  isAvailable   Boolean             @default(true)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  restaurantId  String
+  restaurant    Restaurant           @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  menuItemIngredients MenuItemIngredient[]
+  creationIngredients UserCreationIngredient[]
+
+  @@index([restaurantId])
+  @@index([category])
+  @@index([isAvailable])
+}
+
+// MenuItem model - restaurant's menu items
+model MenuItem {
+  id            String    @id @default(cuid())
+  name          String
+  description   String?
+  image         String?
+  basePrice     Float
+  isAvailable   Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  ingredients   MenuItemIngredient[]
+
+  @@index([restaurantId])
+  @@index([isAvailable])
+}
+
+// Junction table for MenuItem-Ingredient relationship
+model MenuItemIngredient {
+  id            String    @id @default(cuid())
+  quantity      Int       @default(1) // How many units of this ingredient
+  isRequired    Boolean   @default(false) // Can customer remove this?
+
+  menuItemId    String
+  menuItem      MenuItem  @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  ingredientId  String
+  ingredient    Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@unique([menuItemId, ingredientId])
+  @@index([menuItemId])
+  @@index([ingredientId])
+}
+
+// UserCreation model - saved food designs by customers
+model UserCreation {
+  id            String    @id @default(cuid())
+  name          String
+  description   String?
+  image         String?   // Screenshot or 3D render
+  isPublic      Boolean   @default(false)
+  likesCount    Int       @default(0)
+  remixesCount  Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  ingredients   UserCreationIngredient[]
+  likes         Like[]
+  remixes       Remix[]   @relation("RemixedCreation")
+  originalRemix Remix[]   @relation("OriginalCreation")
+  orders        Order[]
+
+  @@index([userId])
+  @@index([restaurantId])
+  @@index([isPublic])
+  @@index([likesCount])
+}
+
+// Junction table for UserCreation-Ingredient relationship
+model UserCreationIngredient {
+  id            String    @id @default(cuid())
+  quantity      Int       @default(1)
+  positionX     Float?    // Position on plate (for 3D rendering)
+  positionY     Float?
+  positionZ     Float?
+  rotation      Float?    // Rotation angle
+
+  creationId    String
+  creation      UserCreation @relation(fields: [creationId], references: [id], onDelete: Cascade)
+
+  ingredientId  String
+  ingredient    Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@index([creationId])
+  @@index([ingredientId])
+}
+
+// Order model - tracks orders with game interaction data
+model Order {
+  id            String      @id @default(cuid())
+  status        OrderStatus @default(PENDING)
+  totalPrice    Float
+  deliveryAddress String
+  deliveryNotes String?
+  gameScore     Int?        // Score from mini-games
+  gameData      Json?       // Store game interaction data (timing, accuracy, etc.)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  confirmedAt   DateTime?
+  deliveredAt   DateTime?
+
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  restaurantId  String
+  restaurant    Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  creationId    String?     // Reference to the UserCreation used
+  creation      UserCreation? @relation(fields: [creationId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([restaurantId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Social: Follow model
+model Follow {
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now())
+
+  followerId    String
+  follower      User      @relation("UserFollowers", fields: [followerId], references: [id], onDelete: Cascade)
+
+  followingId   String
+  following     User      @relation("UserFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+// Social: Like model
+model Like {
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now())
+
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  creationId    String
+  creation      UserCreation @relation(fields: [creationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, creationId])
+  @@index([userId])
+  @@index([creationId])
+}
+
+// Social: Remix model - tracks when users duplicate others' creations
+model Remix {
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now())
+
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  originalCreationId String
+  originalCreation    UserCreation @relation("OriginalCreation", fields: [originalCreationId], references: [id], onDelete: Cascade)
+
+  remixedCreationId   String
+  remixedCreation     UserCreation @relation("RemixedCreation", fields: [remixedCreationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, originalCreationId, remixedCreationId])
+  @@index([userId])
+  @@index([originalCreationId])
+  @@index([remixedCreationId])
+}
+
