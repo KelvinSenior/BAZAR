@@ -108,7 +108,6 @@ export default function FoodBuilderCanvas({
           onIngredientMove(ingredient.id, position)
         }
       }
-      return
     }
   }
 
