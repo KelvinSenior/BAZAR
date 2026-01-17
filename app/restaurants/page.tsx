@@ -26,7 +26,7 @@ export default function RestaurantsPage() {
   useEffect(() => {
     async function fetchRestaurants() {
       try {
-        const res = await fetch('/api/restaurants')
+        const res = await fetch('/api/restaurants/list')
         const data = await res.json()
         setRestaurants(data.restaurants || [])
         setFilteredRestaurants(data.restaurants || [])
