@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { ShoppingBag } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
 
 export default async function HomePage() {
@@ -23,6 +24,34 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      {/* Navigation Bar */}
+      <div className="border-b border-slate-700 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <Link href="/" className="text-2xl font-bold text-primary-400">BAZAR</Link>
+          <div className="flex gap-4">
+            <Link
+              href="/restaurants"
+              className="text-slate-300 hover:text-white transition-colors font-medium"
+            >
+              Restaurants
+            </Link>
+            <Link
+              href="/gallery"
+              className="text-slate-300 hover:text-white transition-colors font-medium"
+            >
+              Gallery
+            </Link>
+            <Link
+              href="/cart"
+              className="flex items-center gap-2 px-4 py-2 bg-primary-500/20 hover:bg-primary-500/30 text-primary-400 rounded-lg transition-colors font-medium"
+            >
+              <ShoppingBag size={20} />
+              Cart
+            </Link>
+          </div>
+        </div>
+      </div>
+
       <div className="container mx-auto px-4 py-16">
         {/* Hero Section */}
         <div className="text-center mb-16">

@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Star, Clock, MapPin, Plus } from 'lucide-react'
+import { ArrowLeft, Star, Clock, MapPin, Plus, ShoppingCart, Zap } from 'lucide-react'
 
 interface MenuItem {
   id: string
@@ -33,6 +33,7 @@ interface GroupedMenuItems {
 
 export default function RestaurantDetailPage() {
   const params = useParams()
+  const router = useRouter()
   const restaurantId = params.id as string
 
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null)
@@ -40,6 +41,7 @@ export default function RestaurantDetailPage() {
   const [groupedItems, setGroupedItems] = useState<GroupedMenuItems>({})
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL')
   const [loading, setLoading] = useState(true)
+  const [addedToCart, setAddedToCart] = useState<string | null>(null)
 
   useEffect(() => {
     async function fetchData() {
@@ -78,6 +80,26 @@ export default function RestaurantDetailPage() {
     selectedCategory === 'ALL'
       ? menuItems
       : groupedItems[selectedCategory] || []
+
+  const addToCart = (item: MenuItem) => {
+    const cartItem = {
+      id: `${item.id}-${Date.now()}`,
+      creationId: item.id,
+      creationName: item.name,
+      restaurantId: restaurantId,
+      restaurantName: restaurant?.name || 'Unknown',
+      quantity: 1,
+      price: item.basePrice,
+      ingredients: [item.description],
+    }
+
+    const cart = JSON.parse(localStorage.getItem('bazar_cart') || '[]')
+    cart.push(cartItem)
+    localStorage.setItem('bazar_cart', JSON.stringify(cart))
+
+    setAddedToCart(item.id)
+    setTimeout(() => setAddedToCart(null), 2000)
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -245,13 +267,28 @@ export default function RestaurantDetailPage() {
                     </div>
 
                     {/* Add Button */}
-                    <Link
-                      href={`/build/${restaurantId}?menuItem=${item.id}`}
-                      className="mt-3 w-full bg-primary-500 hover:bg-primary-600 text-white font-semibold py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
-                    >
-                      <Plus size={18} />
-                      Customize
-                    </Link>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => addToCart(item)}
+                        className={`w-full font-semibold py-2 rounded-lg transition-all flex items-center justify-center gap-2 ${
+                          addedToCart === item.id
+                            ? 'bg-green-500 text-white'
+                            : 'bg-primary-500 hover:bg-primary-600 text-white'
+                        }`}
+                      >
+                        <ShoppingCart size={18} />
+                        {addedToCart === item.id ? 'Added!' : 'Add'}
+                      </motion.button>
+                      <Link
+                        href={`/build/${restaurantId}?menuItem=${item.id}`}
+                        className="w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
+                      >
+                        <Zap size={18} />
+                        Build
+                      </Link>
+                    </div>
                   </div>
                 </motion.div>
               ))}
