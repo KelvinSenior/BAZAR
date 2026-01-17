@@ -66,6 +66,15 @@ export default function IngredientPalette({
 
   return (
     <div className={`bg-slate-800 rounded-2xl border border-slate-700 p-4 ${className}`}>
+      {/* Title with drag instruction */}
+      <div className="mb-4 pb-3 border-b border-slate-700">
+        <h2 className="text-lg font-bold text-white mb-1">Ingredient Palette</h2>
+        <p className="text-xs text-slate-400 flex items-center gap-2">
+          <span className="inline-block px-2 py-1 bg-primary-500/20 border border-primary-500/50 rounded text-primary-400 font-semibold">📌 DRAG</span>
+          Click and drag ingredients to the canvas →
+        </p>
+      </div>
+      
       {/* Search bar */}
       <div className="mb-4">
         <input
@@ -167,14 +176,18 @@ function DraggableIngredient({
         !ingredient.isAvailable ? 'opacity-50' : ''
       }`}
     >
-      <div className="bg-slate-700 rounded-lg p-2 border border-slate-600 hover:border-primary-500 transition-colors">
-        <div className="aspect-square relative mb-2">
+      <div className="bg-slate-700 rounded-lg p-2 border-2 border-slate-600 hover:border-primary-500 transition-all hover:shadow-lg hover:shadow-primary-500/30">
+        <div className="aspect-square relative mb-2 group">
           <img
             src={ingredient.image}
             alt={ingredient.name}
             className="w-full h-full object-cover rounded"
             draggable={false}
           />
+          {/* Drag indicator overlay */}
+          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center bg-black/40 rounded">
+            <span className="text-white text-lg font-bold">↗️ DRAG</span>
+          </div>
           {/* Stock indicator */}
           {ingredient.stock !== undefined && (
             <div

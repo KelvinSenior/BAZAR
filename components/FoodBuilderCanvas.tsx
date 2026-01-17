@@ -124,10 +124,18 @@ export default function FoodBuilderCanvas({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
+      <div className="space-y-3">
+        {/* Canvas Label */}
+        <div className="px-4 py-3 bg-gradient-to-r from-primary-500/10 to-purple-500/10 border border-primary-500/30 rounded-lg">
+          <h2 className="text-sm font-bold text-white mb-1">🍽️ Drop Zone</h2>
+          <p className="text-xs text-slate-300">Drop ingredients here to place them on your creation</p>
+        </div>
+        
+        {/* Canvas */}
       <div
         ref={canvasRef}
         id="canvas"
-        className={`relative w-full h-full min-h-[500px] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl border-2 border-slate-700 overflow-hidden ${className}`}
+        className={`relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl border-2 ${isDragging ? 'border-primary-500 bg-slate-800/80' : 'border-dashed border-slate-600'} overflow-hidden transition-all ${className}`}
       >
         {/* Grid pattern background for visual reference */}
         <div className="absolute inset-0 opacity-10">
@@ -156,6 +164,21 @@ export default function FoodBuilderCanvas({
               isDragging={activeId === ingredient.id}
             />
           ))}
+        </AnimatePresence>
+
+        {/* Empty state message */}
+        {creation.ingredients.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.5 }}
+            className="absolute inset-0 flex items-center justify-center pointer-events-none"
+          >
+            <div className="text-center">
+              <p className="text-slate-400 text-lg font-semibold mb-2">Drag ingredients here</p>
+              <p className="text-slate-500 text-sm">👈 Select from palette on the left</p>
+            </div>
+          </motion.div>
+        )}
         </AnimatePresence>
 
         {/* Drop zone indicator */}
@@ -196,14 +219,24 @@ export default function FoodBuilderCanvas({
       {/* Drag overlay - shows ingredient being dragged */}
       <DragOverlay>
         {activeId && (
-          <DraggedIngredientOverlay
-            ingredient={
-              creation.ingredients.find((ing) => ing.id === activeId) ||
-              ingredients.find((ing) => ing.id === activeId)
-            }
-          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex flex-col items-center gap-2"
+          >
+            <DraggedIngredientOverlay
+              ingredient={
+                creation.ingredients.find((ing) => ing.id === activeId) ||
+                ingredients.find((ing) => ing.id === activeId)
+              }
+            />
+            <div className="bg-primary-500 px-3 py-1 rounded-full text-white text-xs font-bold whitespace-nowrap shadow-lg">
+              ✋ Drop it here!
+            </div>
+          </motion.div>
         )}
       </DragOverlay>
+      </div>
     </DndContext>
   )
 }
