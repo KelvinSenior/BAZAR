@@ -1,142 +1,256 @@
-import { PrismaClient, IngredientCategory, UserRole } from '@prisma/client'
+import { PrismaClient, IngredientCategory, UserRole, MenuCategory } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
 async function main() {
-  console.log('🌱 Starting database seed...')
+  console.log('🌱 Starting professional database seed...')
 
-  // Create admin user
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@bazar.com' },
-    update: {},
-    create: {
+  // Clear existing data
+  await prisma.remix.deleteMany({})
+  await prisma.like.deleteMany({})
+  await prisma.follow.deleteMany({})
+  await prisma.order.deleteMany({})
+  await prisma.userCreation.deleteMany({})
+  await prisma.menuItemIngredient.deleteMany({})
+  await prisma.menuItem.deleteMany({})
+  await prisma.ingredient.deleteMany({})
+  await prisma.restaurant.deleteMany({})
+  await prisma.user.deleteMany({})
+
+  console.log('✅ Cleaned existing data')
+
+  // Create users
+  const admin = await prisma.user.create({
+    data: {
       email: 'admin@bazar.com',
-      name: 'Admin User',
+      name: 'Admin',
       role: UserRole.ADMIN,
     },
   })
 
-  // Create restaurant owner
-  const restaurantOwner = await prisma.user.upsert({
-    where: { email: 'owner@burgerplace.com' },
-    update: {},
-    create: {
-      email: 'owner@burgerplace.com',
-      name: 'Burger Place Owner',
+  const pizzaOwner = await prisma.user.create({
+    data: {
+      email: 'owner@pizzahut.com',
+      name: 'Pizza Hut Manager',
       role: UserRole.RESTAURANT,
     },
   })
 
-  // Create customer users
-  const customer1 = await prisma.user.upsert({
-    where: { email: 'customer1@example.com' },
-    update: {},
-    create: {
-      email: 'customer1@example.com',
-      name: 'John Doe',
-      role: UserRole.CUSTOMER,
-    },
-  })
-
-  const customer2 = await prisma.user.upsert({
-    where: { email: 'customer2@example.com' },
-    update: {},
-    create: {
-      email: 'customer2@example.com',
-      name: 'Jane Smith',
-      role: UserRole.CUSTOMER,
-    },
-  })
-
-  console.log('✅ Users created')
-
-  // Create restaurants
-  const burgerPlace = await prisma.restaurant.upsert({
-    where: { ownerId: restaurantOwner.id },
-    update: {},
-    create: {
-      name: 'Burger Place',
-      description: 'The best burgers in town with customizable ingredients',
-      image: 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=800',
-      address: '123 Main St, Food City',
-      phone: '+1-555-0123',
-      isActive: true,
-      ownerId: restaurantOwner.id,
-    },
-  })
-
-  const pizzaPalace = await prisma.restaurant.create({
+  const burgerOwner = await prisma.user.create({
     data: {
-      name: 'Pizza Palace',
-      description: 'Build your perfect pizza with fresh ingredients',
-      image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800',
-      address: '456 Pizza Ave, Food City',
-      phone: '+1-555-0456',
-      isActive: true,
-      owner: {
-        create: {
-          email: 'owner@pizzapalace.com',
-          name: 'Pizza Palace Owner',
-          role: UserRole.RESTAURANT,
-        },
-      },
+      email: 'owner@burgerking.com',
+      name: 'Burger King Manager',
+      role: UserRole.RESTAURANT,
     },
   })
 
-  console.log('✅ Restaurants created')
+  const sushiOwner = await prisma.user.create({
+    data: {
+      email: 'owner@sushibar.com',
+      name: 'Sushi Bar Manager',
+      role: UserRole.RESTAURANT,
+    },
+  })
 
-  // Create ingredients for Burger Place
-  const burgerIngredients = [
-    // Proteins
-    { name: 'Beef Patty', category: IngredientCategory.PROTEIN, price: 3.50, stock: 50, minStock: 10 },
-    { name: 'Chicken Patty', category: IngredientCategory.PROTEIN, price: 3.00, stock: 30, minStock: 10 },
-    { name: 'Veggie Patty', category: IngredientCategory.PROTEIN, price: 2.50, stock: 20, minStock: 5 },
-    { name: 'Bacon', category: IngredientCategory.PROTEIN, price: 2.00, stock: 40, minStock: 10 },
-    
-    // Vegetables
-    { name: 'Lettuce', category: IngredientCategory.VEGETABLE, price: 0.50, stock: 100, minStock: 20 },
-    { name: 'Tomato', category: IngredientCategory.VEGETABLE, price: 0.75, stock: 80, minStock: 20 },
-    { name: 'Onion', category: IngredientCategory.VEGETABLE, price: 0.50, stock: 60, minStock: 15 },
-    { name: 'Pickles', category: IngredientCategory.VEGETABLE, price: 0.50, stock: 90, minStock: 20 },
-    { name: 'Jalapeños', category: IngredientCategory.VEGETABLE, price: 0.75, stock: 50, minStock: 10 },
-    
-    // Carbs
-    { name: 'Brioche Bun', category: IngredientCategory.CARB, price: 1.00, stock: 100, minStock: 25 },
-    { name: 'Sesame Bun', category: IngredientCategory.CARB, price: 1.00, stock: 80, minStock: 20 },
-    { name: 'Whole Wheat Bun', category: IngredientCategory.CARB, price: 1.25, stock: 40, minStock: 10 },
-    { name: 'Lettuce Wrap', category: IngredientCategory.CARB, price: 0.75, stock: 60, minStock: 15 },
-    
-    // Cheese
-    { name: 'Cheddar', category: IngredientCategory.CHEESE, price: 1.00, stock: 70, minStock: 15 },
-    { name: 'Swiss', category: IngredientCategory.CHEESE, price: 1.25, stock: 50, minStock: 10 },
-    { name: 'Pepper Jack', category: IngredientCategory.CHEESE, price: 1.25, stock: 45, minStock: 10 },
-    { name: 'Blue Cheese', category: IngredientCategory.CHEESE, price: 1.50, stock: 30, minStock: 5 },
-    
+  const customer1 = await prisma.user.create({
+    data: {
+      email: 'john@example.com',
+      name: 'John Smith',
+      role: UserRole.CUSTOMER,
+    },
+  })
+
+  const customer2 = await prisma.user.create({
+    data: {
+      email: 'sarah@example.com',
+      name: 'Sarah Johnson',
+      role: UserRole.CUSTOMER,
+    },
+  })
+
+  console.log('✅ Created 6 users')
+
+  // ============== PIZZA RESTAURANT ==============
+  const pizzaResto = await prisma.restaurant.create({
+    data: {
+      name: 'Pizza Hut Express',
+      description: 'Build your perfect pizza with fresh, authentic toppings',
+      image: 'https://images.unsplash.com/photo-1517248135467-4d71bcdd2167?w=800&h=600&fit=crop',
+      address: '123 Pizza Street, Downtown',
+      phone: '555-0101',
+      isActive: true,
+      ownerId: pizzaOwner.id,
+    },
+  })
+
+  // Pizza ingredients
+  const pizzaIngredients = [
     // Sauces
-    { name: 'Ketchup', category: IngredientCategory.SAUCE, price: 0.25, stock: 200, minStock: 50 },
-    { name: 'Mustard', category: IngredientCategory.SAUCE, price: 0.25, stock: 180, minStock: 50 },
-    { name: 'Mayo', category: IngredientCategory.SAUCE, price: 0.25, stock: 150, minStock: 40 },
-    { name: 'BBQ Sauce', category: IngredientCategory.SAUCE, price: 0.50, stock: 120, minStock: 30 },
-    { name: 'Ranch', category: IngredientCategory.SAUCE, price: 0.50, stock: 100, minStock: 25 },
-    { name: 'Special Sauce', category: IngredientCategory.SAUCE, price: 0.75, stock: 80, minStock: 20 },
-    
+    { name: 'Tomato Sauce', category: IngredientCategory.SAUCE, price: 0.5, stock: 100 },
+    { name: 'Garlic Sauce', category: IngredientCategory.SAUCE, price: 0.75, stock: 80 },
+    { name: 'White Sauce', category: IngredientCategory.SAUCE, price: 0.75, stock: 60 },
+    { name: 'BBQ Sauce', category: IngredientCategory.SAUCE, price: 0.75, stock: 50 },
+
+    // Cheese
+    { name: 'Mozzarella', category: IngredientCategory.CHEESE, price: 1.5, stock: 150 },
+    { name: 'Cheddar Cheese', category: IngredientCategory.CHEESE, price: 1.25, stock: 80 },
+    { name: 'Parmesan', category: IngredientCategory.CHEESE, price: 1.75, stock: 50 },
+    { name: 'Feta Cheese', category: IngredientCategory.CHEESE, price: 1.5, stock: 40 },
+
+    // Proteins
+    { name: 'Pepperoni', category: IngredientCategory.PROTEIN, price: 2.0, stock: 100 },
+    { name: 'Italian Sausage', category: IngredientCategory.PROTEIN, price: 2.25, stock: 70 },
+    { name: 'Bacon Bits', category: IngredientCategory.PROTEIN, price: 2.0, stock: 80 },
+    { name: 'Chicken Chunks', category: IngredientCategory.PROTEIN, price: 1.75, stock: 60 },
+    { name: 'Ham', category: IngredientCategory.PROTEIN, price: 1.5, stock: 50 },
+    { name: 'Anchovies', category: IngredientCategory.PROTEIN, price: 2.5, stock: 30 },
+
+    // Vegetables
+    { name: 'Bell Peppers', category: IngredientCategory.VEGETABLE, price: 0.75, stock: 120 },
+    { name: 'Onions', category: IngredientCategory.VEGETABLE, price: 0.5, stock: 150 },
+    { name: 'Mushrooms', category: IngredientCategory.VEGETABLE, price: 1.0, stock: 90 },
+    { name: 'Olives', category: IngredientCategory.VEGETABLE, price: 1.25, stock: 70 },
+    { name: 'Tomato Slices', category: IngredientCategory.VEGETABLE, price: 0.75, stock: 100 },
+    { name: 'Spinach', category: IngredientCategory.VEGETABLE, price: 1.0, stock: 60 },
+    { name: 'Jalapeños', category: IngredientCategory.VEGETABLE, price: 0.75, stock: 50 },
+    { name: 'Garlic', category: IngredientCategory.VEGETABLE, price: 0.5, stock: 100 },
+
     // Toppings
-    { name: 'Fried Onions', category: IngredientCategory.TOPPING, price: 1.00, stock: 60, minStock: 15 },
-    { name: 'Mushrooms', category: IngredientCategory.TOPPING, price: 1.25, stock: 40, minStock: 10 },
-    { name: 'Avocado', category: IngredientCategory.TOPPING, price: 1.50, stock: 30, minStock: 5 },
-    { name: 'Egg', category: IngredientCategory.TOPPING, price: 1.00, stock: 50, minStock: 10 },
-    
-    // Condiments
-    { name: 'Salt', category: IngredientCategory.CONDIMENT, price: 0.10, stock: 500, minStock: 100 },
-    { name: 'Pepper', category: IngredientCategory.CONDIMENT, price: 0.10, stock: 500, minStock: 100 },
+    { name: 'Oregano', category: IngredientCategory.TOPPING, price: 0.25, stock: 200 },
+    { name: 'Basil', category: IngredientCategory.TOPPING, price: 0.5, stock: 80 },
   ]
 
-  // Delete existing ingredients for this restaurant to avoid duplicates
-  await prisma.ingredient.deleteMany({
-    where: { restaurantId: burgerPlace.id },
+  const createdPizzaIng = []
+  for (const ing of pizzaIngredients) {
+    const ingredient = await prisma.ingredient.create({
+      data: {
+        name: ing.name,
+        category: ing.category,
+        price: ing.price,
+        stock: ing.stock,
+        minStock: 10,
+        isAvailable: true,
+        restaurantId: pizzaResto.id,
+        image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150',
+      },
+    })
+    createdPizzaIng.push(ingredient)
+  }
+
+  // Pizza menu items
+  const pizzaMenu = [
+    {
+      name: 'Margherita Pizza',
+      description: 'Classic pizza with tomato sauce, mozzarella, and fresh basil',
+      price: 9.99,
+      category: MenuCategory.PIZZA,
+      ingredients: ['Tomato Sauce', 'Mozzarella', 'Basil'],
+    },
+    {
+      name: 'Pepperoni Special',
+      description: 'Loaded with pepperoni and extra cheese',
+      price: 11.99,
+      category: MenuCategory.PIZZA,
+      ingredients: ['Tomato Sauce', 'Mozzarella', 'Pepperoni', 'Oregano'],
+    },
+    {
+      name: 'Supreme Pizza',
+      description: 'Topped with pepperoni, sausage, peppers, onions, and olives',
+      price: 14.99,
+      category: MenuCategory.PIZZA,
+      ingredients: ['Tomato Sauce', 'Mozzarella', 'Pepperoni', 'Italian Sausage', 'Bell Peppers', 'Onions', 'Olives'],
+    },
+    {
+      name: 'Vegetarian Delight',
+      description: 'Spinach, mushrooms, peppers, and olives',
+      price: 10.99,
+      category: MenuCategory.PIZZA,
+      ingredients: ['Tomato Sauce', 'Mozzarella', 'Spinach', 'Mushrooms', 'Bell Peppers', 'Olives'],
+    },
+  ]
+
+  for (const item of pizzaMenu) {
+    await prisma.menuItem.create({
+      data: {
+        name: item.name,
+        description: item.description,
+        basePrice: item.price,
+        category: item.category,
+        restaurantId: pizzaResto.id,
+        isAvailable: true,
+        preparationTime: 15,
+        rating: 4.5,
+        ingredients: {
+          create: item.ingredients.map((ingName) => ({
+            ingredientId: createdPizzaIng.find((i) => i.name === ingName)!.id,
+            quantity: 1,
+            isRequired: true,
+          })),
+        },
+      },
+    })
+  }
+
+  console.log('✅ Created Pizza Hut Express with 4 menu items')
+
+  // ============== BURGER RESTAURANT ==============
+  const burgerResto = await prisma.restaurant.create({
+    data: {
+      name: 'Burger Kingdom',
+      description: 'Craft burgers with premium beef and fresh toppings',
+      image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&h=600&fit=crop',
+      address: '456 Burger Lane, Midtown',
+      phone: '555-0202',
+      isActive: true,
+      ownerId: burgerOwner.id,
+    },
   })
 
-  const createdBurgerIngredients = []
+  // Burger ingredients
+  const burgerIngredients = [
+    // Proteins
+    { name: 'Beef Patty Premium', category: IngredientCategory.PROTEIN, price: 4.0, stock: 100 },
+    { name: 'Beef Patty Regular', category: IngredientCategory.PROTEIN, price: 2.5, stock: 120 },
+    { name: 'Chicken Patty', category: IngredientCategory.PROTEIN, price: 2.0, stock: 80 },
+    { name: 'Turkey Patty', category: IngredientCategory.PROTEIN, price: 2.25, stock: 60 },
+    { name: 'Bacon', category: IngredientCategory.PROTEIN, price: 2.0, stock: 100 },
+    { name: 'Ham Slice', category: IngredientCategory.PROTEIN, price: 1.5, stock: 70 },
+
+    // Carbs
+    { name: 'Brioche Bun', category: IngredientCategory.CARB, price: 1.0, stock: 150 },
+    { name: 'Sesame Bun', category: IngredientCategory.CARB, price: 1.0, stock: 140 },
+    { name: 'Whole Wheat Bun', category: IngredientCategory.CARB, price: 1.25, stock: 80 },
+    { name: 'Lettuce Wrap', category: IngredientCategory.CARB, price: 0.75, stock: 100 },
+
+    // Cheese
+    { name: 'American Cheese', category: IngredientCategory.CHEESE, price: 0.75, stock: 150 },
+    { name: 'Swiss Cheese', category: IngredientCategory.CHEESE, price: 1.25, stock: 100 },
+    { name: 'Cheddar Cheese', category: IngredientCategory.CHEESE, price: 1.0, stock: 120 },
+    { name: 'Pepper Jack', category: IngredientCategory.CHEESE, price: 1.25, stock: 80 },
+
+    // Vegetables
+    { name: 'Lettuce', category: IngredientCategory.VEGETABLE, price: 0.5, stock: 150 },
+    { name: 'Tomato', category: IngredientCategory.VEGETABLE, price: 0.75, stock: 120 },
+    { name: 'Onion', category: IngredientCategory.VEGETABLE, price: 0.5, stock: 140 },
+    { name: 'Pickles', category: IngredientCategory.VEGETABLE, price: 0.5, stock: 160 },
+    { name: 'Red Onion', category: IngredientCategory.VEGETABLE, price: 0.75, stock: 80 },
+
+    // Sauces
+    { name: 'Ketchup', category: IngredientCategory.SAUCE, price: 0.25, stock: 300 },
+    { name: 'Mustard', category: IngredientCategory.SAUCE, price: 0.25, stock: 280 },
+    { name: 'Mayo', category: IngredientCategory.SAUCE, price: 0.25, stock: 250 },
+    { name: 'Special Sauce', category: IngredientCategory.SAUCE, price: 0.75, stock: 150 },
+    { name: 'Sriracha Mayo', category: IngredientCategory.SAUCE, price: 0.5, stock: 100 },
+    { name: 'Garlic Aioli', category: IngredientCategory.SAUCE, price: 0.75, stock: 90 },
+
+    // Toppings
+    { name: 'Fried Onions', category: IngredientCategory.TOPPING, price: 1.0, stock: 100 },
+    { name: 'Avocado', category: IngredientCategory.TOPPING, price: 1.5, stock: 60 },
+    { name: 'Egg', category: IngredientCategory.TOPPING, price: 1.0, stock: 80 },
+    { name: 'Mushrooms', category: IngredientCategory.TOPPING, price: 1.25, stock: 70 },
+  ]
+
+  const createdBurgerIng = []
   for (const ing of burgerIngredients) {
     const ingredient = await prisma.ingredient.create({
       data: {
@@ -144,171 +258,202 @@ async function main() {
         category: ing.category,
         price: ing.price,
         stock: ing.stock,
-        minStock: ing.minStock,
-        isAvailable: ing.stock > 0,
-        restaurantId: burgerPlace.id,
-        image: `https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop&q=80`,
+        minStock: 10,
+        isAvailable: true,
+        restaurantId: burgerResto.id,
+        image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150',
       },
     })
-    createdBurgerIngredients.push(ingredient)
+    createdBurgerIng.push(ingredient)
   }
 
-  console.log('✅ Ingredients created')
-
-  // Create menu items
-  const classicBurger = await prisma.menuItem.create({
-    data: {
+  // Burger menu items
+  const burgerMenu = [
+    {
       name: 'Classic Burger',
-      description: 'A timeless favorite with beef patty, lettuce, tomato, and special sauce',
-      basePrice: 8.99,
-      restaurantId: burgerPlace.id,
-      ingredients: {
-        create: [
-          {
-            ingredientId: createdBurgerIngredients.find((i) => i.name === 'Beef Patty')!.id,
+      description: 'Premium beef patty with lettuce, tomato, onion, and special sauce',
+      price: 8.99,
+      category: MenuCategory.BURGERS,
+      ingredients: ['Beef Patty Premium', 'Brioche Bun', 'Lettuce', 'Tomato', 'Onion', 'Special Sauce'],
+    },
+    {
+      name: 'Bacon Cheeseburger',
+      description: 'Juicy beef with crispy bacon, cheddar, and all the fixings',
+      price: 10.99,
+      category: MenuCategory.BURGERS,
+      ingredients: ['Beef Patty Premium', 'Brioche Bun', 'Bacon', 'Cheddar Cheese', 'Lettuce', 'Tomato', 'Special Sauce'],
+    },
+    {
+      name: 'Double Deluxe',
+      description: 'Two beef patties, double cheese, bacon, and fried onions',
+      price: 13.99,
+      category: MenuCategory.BURGERS,
+      ingredients: ['Beef Patty Premium', 'Beef Patty Premium', 'Brioche Bun', 'Swiss Cheese', 'Bacon', 'Fried Onions', 'Garlic Aioli'],
+    },
+    {
+      name: 'Spicy Jalapeño Burger',
+      description: 'Seasoned beef with pepper jack, jalapeños, and sriracha mayo',
+      price: 9.99,
+      category: MenuCategory.BURGERS,
+      ingredients: ['Beef Patty Regular', 'Sesame Bun', 'Pepper Jack', 'Sriracha Mayo'],
+    },
+    {
+      name: 'Mushroom Swiss',
+      description: 'Tender beef with sautéed mushrooms and melted swiss',
+      price: 10.49,
+      category: MenuCategory.BURGERS,
+      ingredients: ['Beef Patty Premium', 'Brioche Bun', 'Swiss Cheese', 'Mushrooms', 'Garlic Aioli'],
+    },
+  ]
+
+  for (const item of burgerMenu) {
+    await prisma.menuItem.create({
+      data: {
+        name: item.name,
+        description: item.description,
+        basePrice: item.price,
+        category: item.category,
+        restaurantId: burgerResto.id,
+        isAvailable: true,
+        preparationTime: 10,
+        rating: 4.6,
+        ingredients: {
+          create: item.ingredients.map((ingName) => ({
+            ingredientId: createdBurgerIng.find((i) => i.name === ingName)!.id,
             quantity: 1,
             isRequired: true,
-          },
-          {
-            ingredientId: createdBurgerIngredients.find((i) => i.name === 'Brioche Bun')!.id,
-            quantity: 1,
-            isRequired: true,
-          },
-          {
-            ingredientId: createdBurgerIngredients.find((i) => i.name === 'Lettuce')!.id,
-            quantity: 1,
-            isRequired: false,
-          },
-          {
-            ingredientId: createdBurgerIngredients.find((i) => i.name === 'Tomato')!.id,
-            quantity: 1,
-            isRequired: false,
-          },
-          {
-            ingredientId: createdBurgerIngredients.find((i) => i.name === 'Special Sauce')!.id,
-            quantity: 1,
-            isRequired: false,
-          },
-        ],
+          })),
+        },
       },
+    })
+  }
+
+  console.log('✅ Created Burger Kingdom with 5 menu items')
+
+  // ============== SUSHI RESTAURANT ==============
+  const sushiResto = await prisma.restaurant.create({
+    data: {
+      name: 'Sushi Bar Premium',
+      description: 'Fresh, authentic sushi with premium ingredients',
+      image: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=800&h=600&fit=crop',
+      address: '789 Sushi Street, Uptown',
+      phone: '555-0303',
+      isActive: true,
+      ownerId: sushiOwner.id,
     },
   })
 
-  const chickenBurger = await prisma.menuItem.create({
-    data: {
-      name: 'Chicken Burger',
-      description: 'Grilled chicken patty with your choice of toppings',
-      basePrice: 7.99,
-      restaurantId: burgerPlace.id,
-      ingredients: {
-        create: [
-          {
-            ingredientId: createdBurgerIngredients.find((i) => i.name === 'Chicken Patty')!.id,
-            quantity: 1,
-            isRequired: true,
-          },
-          {
-            ingredientId: createdBurgerIngredients.find((i) => i.name === 'Sesame Bun')!.id,
-            quantity: 1,
-            isRequired: true,
-          },
-        ],
+  // Sushi ingredients
+  const sushiIngredients = [
+    // Proteins
+    { name: 'Salmon', category: IngredientCategory.PROTEIN, price: 3.5, stock: 80 },
+    { name: 'Tuna', category: IngredientCategory.PROTEIN, price: 4.0, stock: 70 },
+    { name: 'Shrimp', category: IngredientCategory.PROTEIN, price: 3.0, stock: 60 },
+    { name: 'Crab Stick', category: IngredientCategory.PROTEIN, price: 2.0, stock: 90 },
+    { name: 'Egg Tamago', category: IngredientCategory.PROTEIN, price: 1.5, stock: 80 },
+
+    // Carbs
+    { name: 'Sushi Rice', category: IngredientCategory.CARB, price: 0.5, stock: 200 },
+    { name: 'Nori Seaweed', category: IngredientCategory.CARB, price: 1.0, stock: 150 },
+
+    // Vegetables
+    { name: 'Cucumber', category: IngredientCategory.VEGETABLE, price: 0.5, stock: 100 },
+    { name: 'Avocado', category: IngredientCategory.VEGETABLE, price: 1.5, stock: 80 },
+    { name: 'Carrot', category: IngredientCategory.VEGETABLE, price: 0.5, stock: 120 },
+    { name: 'Bell Pepper', category: IngredientCategory.VEGETABLE, price: 0.75, stock: 90 },
+
+    // Sauces
+    { name: 'Soy Sauce', category: IngredientCategory.SAUCE, price: 0.25, stock: 300 },
+    { name: 'Wasabi', category: IngredientCategory.SAUCE, price: 0.5, stock: 100 },
+    { name: 'Spicy Mayo', category: IngredientCategory.SAUCE, price: 0.75, stock: 80 },
+
+    // Toppings
+    { name: 'Sesame Seeds', category: IngredientCategory.TOPPING, price: 0.5, stock: 150 },
+  ]
+
+  const createdSushiIng = []
+  for (const ing of sushiIngredients) {
+    const ingredient = await prisma.ingredient.create({
+      data: {
+        name: ing.name,
+        category: ing.category,
+        price: ing.price,
+        stock: ing.stock,
+        minStock: 10,
+        isAvailable: true,
+        restaurantId: sushiResto.id,
+        image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150',
       },
+    })
+    createdSushiIng.push(ingredient)
+  }
+
+  // Sushi menu items
+  const sushiMenu = [
+    {
+      name: 'Salmon Roll',
+      description: 'Fresh salmon, cucumber, and avocado',
+      price: 7.99,
+      category: MenuCategory.RICE_BOWLS,
+      ingredients: ['Salmon', 'Sushi Rice', 'Nori Seaweed', 'Cucumber', 'Avocado'],
     },
-  })
+    {
+      name: 'Tuna Spicy Roll',
+      description: 'Spicy tuna with jalapeño and sriracha mayo',
+      price: 8.99,
+      category: MenuCategory.RICE_BOWLS,
+      ingredients: ['Tuna', 'Sushi Rice', 'Nori Seaweed', 'Spicy Mayo', 'Sesame Seeds'],
+    },
+  ]
 
-  console.log('✅ Menu items created')
+  for (const item of sushiMenu) {
+    await prisma.menuItem.create({
+      data: {
+        name: item.name,
+        description: item.description,
+        basePrice: item.price,
+        category: item.category,
+        restaurantId: sushiResto.id,
+        isAvailable: true,
+        preparationTime: 8,
+        rating: 4.7,
+        ingredients: {
+          create: item.ingredients.map((ingName) => ({
+            ingredientId: createdSushiIng.find((i) => i.name === ingName)!.id,
+            quantity: 1,
+            isRequired: true,
+          })),
+        },
+      },
+    })
+  }
 
-  // Create sample user creation
-  const sampleCreation = await prisma.userCreation.create({
+  console.log('✅ Created Sushi Bar Premium with 2 menu items')
+
+  // ============== CREATE SAMPLE ORDERS ==============
+  const order1 = await prisma.order.create({
     data: {
-      name: 'Ultimate Burger',
-      description: 'Loaded burger with all the best ingredients',
-      isPublic: true,
+      status: 'DELIVERED',
+      totalPrice: 24.99,
+      deliveryAddress: '123 Customer Ave, Downtown',
       userId: customer1.id,
-      restaurantId: burgerPlace.id,
-      ingredients: {
-        create: [
-          {
-            ingredientId: createdBurgerIngredients.find((i) => i.name === 'Beef Patty')!.id,
-            quantity: 2,
-            positionX: 40,
-            positionY: 30,
-            positionZ: 0,
-            rotation: 0,
-          },
-          {
-            ingredientId: createdBurgerIngredients.find((i) => i.name === 'Bacon')!.id,
-            quantity: 3,
-            positionX: 50,
-            positionY: 40,
-            positionZ: 0.1,
-            rotation: 15,
-          },
-          {
-            ingredientId: createdBurgerIngredients.find((i) => i.name === 'Cheddar')!.id,
-            quantity: 2,
-            positionX: 45,
-            positionY: 35,
-            positionZ: 0.05,
-            rotation: 0,
-          },
-          {
-            ingredientId: createdBurgerIngredients.find((i) => i.name === 'Lettuce')!.id,
-            quantity: 1,
-            positionX: 55,
-            positionY: 50,
-            positionZ: 0.15,
-            rotation: 30,
-          },
-          {
-            ingredientId: createdBurgerIngredients.find((i) => i.name === 'Tomato')!.id,
-            quantity: 2,
-            positionX: 60,
-            positionY: 45,
-            positionZ: 0.2,
-            rotation: 45,
-          },
-        ],
-      },
+      restaurantId: pizzaResto.id,
     },
   })
 
-  console.log('✅ Sample creation created')
-
-  // Create sample order
-  const sampleOrder = await prisma.order.create({
+  const order2 = await prisma.order.create({
     data: {
       status: 'PREPARING',
-      totalPrice: 12.99,
-      deliveryAddress: '789 Customer St, Food City',
-      gameScore: 850,
-      gameData: {
-        grillTiming: {
-          startTime: Date.now() - 60000,
-          endTime: Date.now() - 30000,
-          perfectTiming: true,
-        },
-        sauceMixing: {
-          accuracy: 95,
-          timeTaken: 45000,
-        },
-        assemblyOrder: [
-          createdBurgerIngredients.find((i) => i.name === 'Beef Patty')!.id,
-          createdBurgerIngredients.find((i) => i.name === 'Bacon')!.id,
-          createdBurgerIngredients.find((i) => i.name === 'Cheddar')!.id,
-        ],
-        totalTime: 120000,
-      },
-      userId: customer1.id,
-      restaurantId: burgerPlace.id,
-      creationId: sampleCreation.id,
+      totalPrice: 19.99,
+      deliveryAddress: '456 Customer Blvd, Midtown',
+      userId: customer2.id,
+      restaurantId: burgerResto.id,
     },
   })
 
-  console.log('✅ Sample order created')
+  console.log('✅ Created sample orders')
 
-  // Create follow relationship
+  // ============== CREATE SOCIAL RELATIONSHIPS ==============
   await prisma.follow.create({
     data: {
       followerId: customer2.id,
@@ -316,30 +461,17 @@ async function main() {
     },
   })
 
-  // Create like
-  await prisma.like.create({
-    data: {
-      userId: customer2.id,
-      creationId: sampleCreation.id,
-    },
-  })
+  console.log('✅ Created social relationships')
 
-  // Update creation like count
-  await prisma.userCreation.update({
-    where: { id: sampleCreation.id },
-    data: { likesCount: 1 },
-  })
-
-  console.log('✅ Social relationships created')
-
-  console.log('🎉 Database seed completed!')
+  console.log('\n🎉 Professional database seed completed!')
   console.log('\n📊 Summary:')
-  console.log(`   - Users: 4 (1 admin, 1 restaurant owner, 2 customers)`)
-  console.log(`   - Restaurants: 2`)
-  console.log(`   - Ingredients: ${createdBurgerIngredients.length}`)
-  console.log(`   - Menu Items: 2`)
-  console.log(`   - Sample Creation: 1`)
-  console.log(`   - Sample Order: 1`)
+  console.log('   ✅ 6 Users (1 admin, 3 restaurant owners, 2 customers)')
+  console.log('   ✅ 3 Restaurants (Pizza, Burger, Sushi)')
+  console.log('   ✅ 60+ Ingredients across all restaurants')
+  console.log('   ✅ 11 Menu Items with proper categories and ingredients')
+  console.log('   ✅ 2 Sample Orders')
+  console.log('   ✅ Social relationships (follows)')
+  console.log('\n🚀 Ready for development!')
 }
 
 main()
@@ -347,8 +479,7 @@ main()
     await prisma.$disconnect()
   })
   .catch(async (e) => {
-    console.error('❌ Error seeding database:', e)
+    console.error('❌ Error:', e)
     await prisma.$disconnect()
     process.exit(1)
   })
-

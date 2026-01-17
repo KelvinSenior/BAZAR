@@ -14,6 +14,7 @@ export default async function HomePage() {
         description: true,
         image: true,
       },
+      orderBy: { createdAt: 'desc' },
     })
   } catch (error) {
     console.error('Database connection error:', error)
@@ -31,18 +32,18 @@ export default async function HomePage() {
           <p className="text-xl text-slate-300 mb-8">
             Build your perfect meal through an interactive game-like experience
           </p>
-          <div className="flex gap-4 justify-center">
-            <Link
-              href="/gallery"
-              className="px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-semibold transition-colors"
-            >
-              Explore Gallery
-            </Link>
+          <div className="flex gap-4 justify-center flex-wrap">
             <Link
               href="/restaurants"
-              className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-semibold transition-colors"
+              className="px-8 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-semibold transition-colors"
             >
               Browse Restaurants
+            </Link>
+            <Link
+              href="/gallery"
+              className="px-8 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-semibold transition-colors"
+            >
+              Explore Gallery
             </Link>
           </div>
         </div>
@@ -55,7 +56,7 @@ export default async function HomePage() {
               {restaurants.map((restaurant) => (
                 <Link
                   key={restaurant.id}
-                  href={`/build/${restaurant.id}`}
+                  href={`/restaurants/${restaurant.id}`}
                   className="bg-slate-800 rounded-xl overflow-hidden border border-slate-700 hover:border-primary-500 transition-all hover:scale-105"
                 >
                   {restaurant.image && (
@@ -70,14 +71,36 @@ export default async function HomePage() {
                   <div className="p-4">
                     <h3 className="text-xl font-bold text-white mb-2">{restaurant.name}</h3>
                     {restaurant.description && (
-                      <p className="text-slate-400 text-sm">{restaurant.description}</p>
+                      <p className="text-slate-400 text-sm line-clamp-2">{restaurant.description}</p>
                     )}
-                    <div className="mt-4 text-primary-400 font-semibold">Start Building →</div>
+                    <div className="mt-4 text-primary-400 font-semibold">View Menu →</div>
                   </div>
                 </Link>
               ))}
             </div>
           ) : (
+            <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 text-center">
+              <p className="text-slate-400">No restaurants available yet</p>
+              <p className="text-slate-500 text-sm mt-2">Check back soon for exciting new restaurants!</p>
+            </div>
+          )}
+        </div>
+
+        {/* Call to Action */}
+        <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-8 md:p-12 text-center text-white">
+          <h2 className="text-3xl font-bold mb-4">Ready to Build Your Meal?</h2>
+          <p className="text-lg mb-6 opacity-90">Choose your restaurant and start creating with our interactive food builder</p>
+          <Link
+            href="/restaurants"
+            className="inline-block px-8 py-3 bg-white text-primary-600 font-semibold rounded-lg hover:bg-slate-100 transition-colors"
+          >
+            Get Started Now
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+}
             <div className="bg-yellow-900/20 border border-yellow-700 rounded-xl p-6 text-center">
               <h3 className="text-xl font-bold text-yellow-400 mb-2">Database Not Connected</h3>
               <p className="text-yellow-300 mb-4">

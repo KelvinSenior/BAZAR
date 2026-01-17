@@ -13,7 +13,9 @@ export async function GET(
       include: {
         menuItems: {
           where: { isAvailable: true },
-          take: 10,
+        },
+        ingredients: {
+          where: { isAvailable: true },
         },
       },
     })

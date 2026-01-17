@@ -37,6 +37,19 @@ enum IngredientCategory {
   CONDIMENT
 }
 
+enum MenuCategory {
+  PIZZA
+  BURGERS
+  SANDWICHES
+  SALADS
+  PASTA
+  RICE_BOWLS
+  APPETIZERS
+  DESSERTS
+  BEVERAGES
+  SIDES
+}
+
 // User model - supports both customers and restaurant owners
 model User {
   id            String    @id @default(cuid())
@@ -119,7 +132,13 @@ model MenuItem {
   description   String?
   image         String?
   basePrice     Float
+  category      MenuCategory
+  preparationTime Int?     // Time in minutes to prepare
+  calories      Int?
   isAvailable   Boolean   @default(true)
+  isVegetarian  Boolean   @default(false)
+  isSpicy       Boolean   @default(false)
+  rating        Float?    @default(0)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -129,6 +148,7 @@ model MenuItem {
   ingredients   MenuItemIngredient[]
 
   @@index([restaurantId])
+  @@index([category])
   @@index([isAvailable])
 }
 
