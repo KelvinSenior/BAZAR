@@ -130,26 +130,5 @@ export default async function HomePage() {
     </div>
   )
 }
-            <div className="bg-yellow-900/20 border border-yellow-700 rounded-xl p-6 text-center">
-              <h3 className="text-xl font-bold text-yellow-400 mb-2">Database Not Connected</h3>
-              <p className="text-yellow-300 mb-4">
-                The app is running, but can't connect to the database. To see restaurants and ingredients, please:
-              </p>
-              <ol className="text-left text-yellow-200 space-y-2 max-w-2xl mx-auto mb-4">
-                <li>1. Check your Supabase database is active (free tier databases pause after inactivity)</li>
-                <li>2. Verify your DATABASE_URL in the <code className="bg-slate-800 px-2 py-1 rounded">.env</code> file is correct</li>
-                <li>3. Run <code className="bg-slate-800 px-2 py-1 rounded">npx prisma db push</code> to create tables</li>
-                <li>4. Run <code className="bg-slate-800 px-2 py-1 rounded">npm run db:seed</code> to add sample data</li>
-              </ol>
-              <p className="text-sm text-yellow-300">
-                💡 <strong>Tip:</strong> If using Supabase, wake up your database by visiting the Supabase dashboard, then try again.
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
 
 
